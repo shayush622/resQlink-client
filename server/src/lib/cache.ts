@@ -1,25 +1,31 @@
 import { supabase } from "@/lib/supabaseServer";
 
-export async function getCache<T>(key: string): Promise<T | null> {
-  const now = new Date().toISOString();
+const DEFAULT_TTL = 60 * 60 * 1000; 
 
-  const { data, error } = await supabase
+export async function getOrSetCache<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  ttlMs: number = DEFAULT_TTL): Promise<{ data: T; fromCache: boolean }> {
+  const now = new Date();
+
+  const { data: cached } = await supabase
     .from("cache")
     .select("value")
     .eq("key", key)
-    .gt("expires_at", now)
+    .gt("expires_at", now.toISOString())
     .single();
 
-  if (error) return null;
-  return data?.value as T;
-}
+  if (cached?.value) {
+    return { data: cached.value as T, fromCache: true };
+  }
 
-export async function setCache(key: string, value: any, ttlSeconds: number) {
-  const expires_at = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+  const freshData = await fetcher();
 
-  const { error } = await supabase
-    .from("cache")
-    .upsert({ key, value, expires_at });
+  await supabase.from("cache").upsert({
+    key,
+    value: freshData,
+    expires_at: new Date(now.getTime() + ttlMs).toISOString(),
+  });
 
-  if (error) console.error("Cache set error:", error.message);
+  return { data: freshData, fromCache: false };
 }

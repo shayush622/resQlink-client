@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyImageWithGemini } from "@/lib/verifyImageWithGemini";
+import { getOrSetCache } from "@/lib/cache";
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,11 +9,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing imageUrl" }, { status: 400 });
     }
 
-    const analysis = await verifyImageWithGemini(imageUrl);
+    const cacheKey = `gemini:image:${imageUrl}`;
 
-    return NextResponse.json({ analysis });
+    const analysis = await getOrSetCache(cacheKey, async () => {
+      return await verifyImageWithGemini(imageUrl);
+    });
+
+    return NextResponse.json({ analysis }, { status: 200 });
+
   } catch (err) {
     console.error("Error verifying image:", err);
-    return NextResponse.json({ err: "Internal error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

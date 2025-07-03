@@ -25,7 +25,6 @@ export async function POST(req: NextRequest) {
 
   } 
   catch  {
-    // console.error('Upload error:', err)
     return new Response(JSON.stringify({ error: 'Image upload failed' }), { status: 500 })
   }
 }

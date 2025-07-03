@@ -55,8 +55,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-//DELETE
-// app/api/disasters/[id]/route.ts
 
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } })
 {
