@@ -4,36 +4,51 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 export async function verifyImageWithGemini(imageUrl: string): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" })
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })  
 
-    // Load image bytes from URL
-    const imageBuffer = await fetch(imageUrl).then((res) => res.arrayBuffer())
+    const imageBuffer = await fetch(imageUrl).then((res) => {
+      if (!res.ok) throw new Error("Image fetch failed: " + res.status)
+      return res.arrayBuffer()
+    })
+
     const imageBase64 = Buffer.from(imageBuffer).toString("base64")
 
-    const prompt = 
-        `Analyze this image and answer the following:
-        - Is it showing a real disaster scene like a flood, fire, or earthquake?
-        - Are there signs of manipulation or AI generation?
-        Give a short and clear response.`
-    
+    const prompt = `
+      You are a disaster response AI.
+      This image was submitted during an ongoing disaster.
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          mimeType: "image/jpeg", 
-          data: imageBase64,
+      Based only on the visual information, determine:
+      - Does this appear to be a real disaster (like a flood, fire, or earthquake)?
+      - Are there visible signs of manipulation, AI generation, or irrelevance?
+      - Be honest and give a 2-3 sentence analysis.
+    `
+
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: imageBase64,
+              },
+            },
+          ],
         },
-      },
-    ])
+      ],
+    })
 
     const response = await result.response
-    const text = response.text()
+    return response.text()
+  } 
+  catch (error: unknown) {
+    let message = "Unknown error"
+    if (error instanceof Error) message = error.message
+    else if (typeof error === "string") message = error
 
-    return text
-  }
-   catch (error) {
-    console.error("Gemini verification failed:", error)
-    return "Unable to verify image due to error."
+    console.error("Gemini verification failed:", message)
+    return `Gemini failed to verify image. Error: ${message}`
   }
 }
