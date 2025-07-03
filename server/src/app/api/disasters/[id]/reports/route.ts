@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseServer";
 import { Readable } from "stream";
 import { IncomingMessage, IncomingHttpHeaders } from "http"; 
 import { getOrSetCache } from "@/lib/cache";
+import { liveKitEmitter } from "@/lib/livekitEmitter";
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -96,8 +97,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       console.error("Insert error:", error.message);
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
-
     await supabase.from("cache").delete().eq("key", `reports:${disaster_id}`);
+
+    await liveKitEmitter(`disaster-${disaster_id}`, {
+    type: "report_added",
+    data: data[0], // or however you're structuring the inserted data
+    });
 
     return new Response(JSON.stringify(data), {
       status: 201,

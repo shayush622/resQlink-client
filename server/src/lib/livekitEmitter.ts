@@ -9,11 +9,17 @@ const roomClient = new RoomServiceClient(
   LIVEKIT_API_KEY,
   LIVEKIT_API_SECRET
 );
-type LiveKitPayload = {
-  type: 'disaster_updated' | 'social_media_updated' | 'resources_updated';
-};
+type DisasterUpdate = { id: string; title: string };
+type SocialMediaUpdate = { posts: string[] };
+type ResourcesUpdate = { lat: number; lng: number; name: string };
 
-export async function sendLiveKitUpdate(room: string, payload: LiveKitPayload): Promise<void>
+export type LiveKitPayload =
+  | { type: 'disaster_updated'; data?: DisasterUpdate }
+  | { type: 'social_media_updated'; data?: SocialMediaUpdate }
+  | { type: 'report_added'; data?: SocialMediaUpdate }
+  | { type: 'resources_updated'; data?: ResourcesUpdate };
+
+export async function liveKitEmitter(room: string, payload: LiveKitPayload): Promise<void>
 {
   try {
     const json = JSON.stringify(payload);
