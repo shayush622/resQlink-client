@@ -12,3 +12,16 @@ export type DisasterUpdate = {
   location?: { type: 'Point'; coordinates: [number, number] };
   audit_trail?: AuditEntry[];
 };
+
+export type Disaster = DisasterUpdate & {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  distance: number;
+  location: { type: 'Point'; coordinates: [number, number] };
+  created_at: string;
+};
+export type DisasterWithDistance = Disaster & {
+  distance: number; 
+};
