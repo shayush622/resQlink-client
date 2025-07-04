@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { supabase } from "@/lib/supabaseServer";
 import { getUserFromRequest } from '@/lib/getUserFromRequest';
 import { getOrSetCache } from "@/lib/cache";
+import { liveKitEmitter } from "@/lib/livekitEmitter";
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -54,6 +55,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
+
+  await liveKitEmitter("disaster-" + params.id, {
+      type: "official_update_added",
+      data: {
+        disaster_id: params.id,
+        update_id: data[0].id,
+        title: data[0].title,
+        description: data[0].description,
+        posted_by: data[0].posted_by,
+        created_at: data[0].created_at,
+      },
+    });
+
 
   await supabase.from("cache").delete().eq("key", `official-updates:${params.id}`);
 

@@ -99,10 +99,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
     await supabase.from("cache").delete().eq("key", `reports:${disaster_id}`);
 
-    await liveKitEmitter(`disaster-${disaster_id}`, {
-    type: "report_added",
-    data: data[0], // or however you're structuring the inserted data
-    });
+     await liveKitEmitter("disaster-" + disaster_id, {
+        type: "report_added",
+        data: {
+          disaster_id,
+          report_id: data[0].id,
+          content: data[0].content,
+          user_id: data[0].user_id,
+          image_url: data[0].image_url,
+          verification_status: data[0].verification_status,
+          created_at: data[0].created_at,
+        },
+      });
+
 
     return new Response(JSON.stringify(data), {
       status: 201,

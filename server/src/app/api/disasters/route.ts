@@ -1,6 +1,7 @@
 // server/src/app/api/disasters/route.ts
 import { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabaseServer'
+import { liveKitEmitter } from '@/lib/livekitEmitter'
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,6 +43,18 @@ export async function POST(req: NextRequest) {
         headers: { 'Content-Type': 'application/json' }
       });
     }
+    await liveKitEmitter("disasters", {
+      type: "disaster_updated",
+      data: {
+        disaster_id: data[0].id,
+        action: "created",
+        title: data[0].title,
+        description: data[0].description,
+        location: data[0].location, 
+        created_at: data[0].created_at,
+      },
+    });
+
 
     return new Response(JSON.stringify(data), {
       status: 200,
