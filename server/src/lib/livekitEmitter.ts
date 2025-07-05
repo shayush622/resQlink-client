@@ -11,39 +11,39 @@ const roomClient = new RoomServiceClient(
 );
 
 export type LiveKitPayload =
-| {
-    type: "resources_updated";
-    data: {
-      disaster_id: string;
-      resource_id: string;
-      resource_type: string;
-      summary: string;
-      updated_at: string;
-    };
-  }
-| {
-    type: "social_media_updated";
-    data: {
-      disaster_id: string;
-      source: string; 
-      summary: string;
-      fetched_at: string;
-    };
-  }
-| {
-    type: 'disaster_updated';
-    data: {
-      disaster_id: string;
-      action: 'created' | 'updated' | 'deleted';
-      title: string;
-      description: string;
-      location: {
-        type: 'Point';
-        coordinates: [number, number];
+  | {
+      type: "resources_updated";
+      data: {
+        disaster_id: string;
+        resource_id: string;
+        resource_type: string;
+        summary: string;
+        updated_at: string;
       };
-      created_at: string;
-    };
-  }
+    }
+  | {
+      type: "social_media_updated";
+      data: {
+        disaster_id: string;
+        source: string;
+        summary: string;
+        fetched_at: string;
+      };
+    }
+  | {
+      type: "disaster_updated";
+      data: {
+        disaster_id: string;
+        action: "created" | "updated" | "deleted";
+        title: string;
+        description: string;
+        location: {
+          type: "Point";
+          coordinates: [number, number];
+        };
+        created_at: string;
+      };
+    }
   | {
       type: "report_added";
       data: {
@@ -68,13 +68,21 @@ export type LiveKitPayload =
       };
     };
 
-export async function liveKitEmitter(room: string, payload: LiveKitPayload): Promise<void>
-{
+export async function liveKitEmitter(room: string, payload: LiveKitPayload): Promise<void> {
   try {
+    await roomClient
+      .createRoom({
+        name: room,
+        emptyTimeout: 300, 
+        maxParticipants: 50,
+      });
+
     const json = JSON.stringify(payload);
     await roomClient.sendData(room, Buffer.from(json), DataPacket_Kind.RELIABLE);
     console.log(`Sent update to room "${room}":`, payload);
-  } catch (err) {
+  }
+   catch (err)
+  {
     console.error("Failed to send LiveKit update:", err);
   }
 }
