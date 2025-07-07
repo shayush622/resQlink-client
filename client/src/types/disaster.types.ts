@@ -26,3 +26,12 @@ export type Disaster = {
 export type DisasterWithDistance = Disaster & {
   distance: number; 
 };
+export type Report = {
+  id: string;
+  disaster_id: string;
+  user_id: string;
+  content: string;
+  image_url: string | null;
+  verification_status: 'verified' | 'rejected' | 'pending';
+  created_at: string;
+};

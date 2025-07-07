@@ -120,3 +120,39 @@
     @apply bg-background text-foreground;
   }
 }
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-out {
+  animation: fadeInOut 2s ease-in-out;
+}
+@supports (backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px)) {
+  .backdrop-blur-md {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-1px); }
+}
+
+.hover-shake:hover {
+  animation: shake 0.3s ease-in-out;
+}
+
+

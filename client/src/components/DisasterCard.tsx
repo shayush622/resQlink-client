@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Disaster } from "@/types/disaster.types";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type Props = {
   disaster: Disaster;
@@ -18,24 +19,26 @@ export function DisasterCard({ disaster }: Props) {
   }, [disaster.created_at]);
 
   return (
-    <Card className="rounded-2xl shadow-md border">
-      <CardContent className="p-4 space-y-2">
-        <h2 className="text-xl font-semibold">{disaster.title}</h2>
-        <p className="text-sm text-muted-foreground">{disaster.description}</p>
-        <p className="text-sm font-medium">📍 {disaster.location_name}</p>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {disaster.tags?.map((tag) => (
-            <Badge key={tag} variant="secondary">
-              #{tag}
-            </Badge>
-          ))}
-        </div>
-        {createdAt && (
-          <p className="text-xs text-muted-foreground mt-2">
-            Created at: {createdAt}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+    <Link href={`/disasters/${disaster.id}`}>
+      <Card className="rounded-2xl shadow-md border hover:scale-[1.02] hover:shadow-lg transition-all cursor-pointer">
+        <CardContent className="p-4 space-y-2">
+          <h2 className="text-xl font-semibold">{disaster.title}</h2>
+          <p className="text-sm text-muted-foreground">{disaster.description}</p>
+          <p className="text-sm font-medium">📍 {disaster.location_name}</p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {disaster.tags?.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                #{tag}
+              </Badge>
+            ))}
+          </div>
+          {createdAt && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Created at: {createdAt}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
