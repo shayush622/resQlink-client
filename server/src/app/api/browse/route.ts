@@ -3,7 +3,19 @@ import { getOrSetCache } from "@/lib/cache";
 import { NextRequest } from "next/server";
 import { Disaster, DisasterWithDistance } from "@/types/disaster.type";
 
+export function OPTIONS() {
+  const headers = new Headers();
+  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  return new Response(null, { status: 204, headers });
+}
+
 export async function GET(req: NextRequest) {
+  const headers = new Headers(); 
+  headers.set("Access-Control-Allow-Origin", "*");
+
   const { searchParams } = new URL(req.url);
   const lat = searchParams.get("lat");
   const lng = searchParams.get("lng");
@@ -28,12 +40,12 @@ export async function GET(req: NextRequest) {
         return data;
       });
 
+      headers.set("Content-Type", "application/json");
+      headers.set("X-Cache", fromCache ? "HIT" : "MISS");
+
       return new Response(JSON.stringify(data), {
         status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Cache": fromCache ? "HIT" : "MISS",
-        },
+        headers,
       });
     }
 
@@ -63,17 +75,20 @@ export async function GET(req: NextRequest) {
       filteredData = filteredData.filter((d) => d.tags?.includes(tag));
     }
 
+    headers.set("Content-Type", "application/json");
+    headers.set("X-Cache", "BYPASS");
+
     return new Response(JSON.stringify(filteredData), {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "X-Cache": "BYPASS",
-      },
+      headers,
     });
   } catch (err) {
     console.error("GET /browse error:", err);
+    headers.set("Content-Type", "application/json");
+
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
+      headers,
     });
   }
 }
