@@ -74,7 +74,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const content = Array.isArray(fields.content) ? fields.content[0] : fields.content;
 
     let image_url: string | null = null;
-    let verification_summary: string | null = null;
+    let geminiResult: { isVerified: boolean; summary: string } | null = null;
 
     if (files.image) {
       const file = Array.isArray(files.image) ? files.image[0] : files.image;
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       const uploaded = await uploadImageToImageKit(buffer, file.originalFilename || "upload.jpg");
       image_url = uploaded.url;
 
-      verification_summary = await verifyImageWithGemini(image_url);
+      geminiResult = await verifyImageWithGemini(image_url);
     }
 
     const { data, error } = await supabase.from("reports").insert([{
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       user_id,
       content,
       image_url,
-      verification_status: verification_summary ? "verified" : "pending",
+      verification_status: (geminiResult ? geminiResult.isVerified ? "verified" : "rejected" : "pending"),
     }]).select("*");
 
     if (error) {
