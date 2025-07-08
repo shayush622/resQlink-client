@@ -1,7 +1,18 @@
-// app/api/disasters/[id]/route.ts
 import { supabase } from '@/lib/supabaseServer';
 import { NextRequest } from 'next/server';
 import { AuditEntry } from '@/types/disaster.type';
+import { withCorsHeaders } from '@/lib/withCors';
+
+export function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
+}
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -55,9 +66,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } })
-{
+export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params;
 
@@ -74,11 +83,36 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
       JSON.stringify({ message: `Disaster ${id} deleted successfully.` }),
       { status: 200 }
     );
-  } 
-  catch (err) {
+  } catch (err) {
     console.error('DELETE /disasters/:id error:', err);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
     });
+  }
+}
+
+export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const { id } = params;
+    const { data, error } = await supabase
+      .from('disasters')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
+      const res = new Response(JSON.stringify({ error: 'Disaster not found' }), { status: 404 });
+      return withCorsHeaders(res);
+    }
+
+    const res = new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return withCorsHeaders(res);
+
+  } catch {
+    const res = new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    return withCorsHeaders(res);
   }
 }

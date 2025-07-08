@@ -8,36 +8,59 @@ import { Readable } from "stream";
 import { IncomingMessage, IncomingHttpHeaders } from "http"; 
 import { getOrSetCache } from "@/lib/cache";
 import { liveKitEmitter } from "@/lib/livekitEmitter";
+import { withCorsHeaders } from "@/lib/withCors";
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
+
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const disaster_id = params.id;
-    const cacheKey = `reports:${disaster_id}`;
+    const { searchParams } = new URL(req.url);
+    const refresh = searchParams.get('refresh') === 'true';
 
-    const { data, fromCache } = await getOrSetCache(cacheKey, async () => {
+    const cacheKey = `reports:verified:${disaster_id}`;
+
+    const fetchReports = async () => {
       const { data, error } = await supabase
         .from('reports')
         .select('*')
         .eq('disaster_id', disaster_id)
+        .eq('verification_status', 'verified')
         .order('created_at', { ascending: false });
 
       if (error) throw new Error(error.message);
       return data;
-    });
+    };
 
-    return new Response(JSON.stringify(data), {
+    const { data, fromCache } = refresh
+      ? { data: await fetchReports(), fromCache: false }
+      : await getOrSetCache(cacheKey, fetchReports);
+
+    return withCorsHeaders(new Response(JSON.stringify(data), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
         'X-Cache': fromCache ? 'HIT' : 'MISS',
       },
-    });
-
+    }));
   } catch (err) {
     console.error('GET /reports error:', err);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+    });
   }
 }
+
+
 
 export async function toNodeReadable(req: NextRequest): Promise<IncomingMessage> {
   const bodyStream = await webStreamToNodeReadable(req.body as ReadableStream<Uint8Array>);
@@ -113,13 +136,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       });
 
 
-    return new Response(JSON.stringify(data), {
+    return withCorsHeaders(new Response(JSON.stringify(data), {
       status: 201,
-      headers: { "Content-Type": "application/json" },
-    });
+      headers: { 'Content-Type': 'application/json' },
+    }));
+
 
   } catch (err) {
     console.error("POST /reports error:", err);
-    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
+    return withCorsHeaders(new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 }));
   }
 }
