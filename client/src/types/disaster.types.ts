@@ -35,3 +35,12 @@ export type Report = {
   verification_status: 'verified' | 'rejected' | 'pending';
   created_at: string;
 };
+export type OfficialUpdate = {
+  id: string;
+  disaster_id: string;
+  title: string;
+  description: string;
+  posted_by: string;
+  created_at: string;
+};
+
