@@ -81,6 +81,13 @@ export default function DisasterDetailsPage() {
         <Button variant="ghost" onClick={() => router.push(`/disasters/${id}/submit-report`)}>
           Submit a Report
         </Button>
+        <Button onClick={() => router.push(`/disasters/${id}/resources`)}>
+        View Resources
+        </Button>
+        <Button onClick={() => router.push(`/disasters/${id}/social-media`)}>
+          View Social Media
+        </Button>
+
       </div>
     </div>
   );

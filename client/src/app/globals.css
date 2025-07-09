@@ -154,5 +154,12 @@
 .hover-shake:hover {
   animation: shake 0.3s ease-in-out;
 }
+.emoji-marker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: translate(-15px, -30px);
+}
+
 
 

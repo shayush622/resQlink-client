@@ -43,4 +43,25 @@ export type OfficialUpdate = {
   posted_by: string;
   created_at: string;
 };
+export type Resource = {
+  id: string;
+  disaster_id: string;
+  name: string;
+  type: string;
+  description?: string;
+  location_name?: string;
+  location: {
+    type: 'Point';
+    coordinates: [number, number]; // [lng, lat]
+  };
+};
+export interface Tweet {
+  id: string;
+  text: string;
+  username: string;
+  created_at: string;
+  url?: string;
+  profile_image_url?: string;
+  platform: 'twitter' | 'reddit' | 'instagram' | 'other';
+}
 
