@@ -9,6 +9,7 @@ import { IncomingMessage, IncomingHttpHeaders } from "http";
 import { getOrSetCache } from "@/lib/cache";
 import { liveKitEmitter } from "@/lib/livekitEmitter";
 import { withCorsHeaders } from "@/lib/withCors";
+import { getAuthenticatedUser } from "@/lib/authMiddlware";
 
 export function OPTIONS() {
   return new Response(null, {
@@ -88,6 +89,14 @@ async function webStreamToNodeReadable(webStream: ReadableStream<Uint8Array>) {
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const user = await getAuthenticatedUser(req);
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+      }
+    
+      if (user.role !== "admin") {
+        return new Response(JSON.stringify({ error: "Forbidden – admin only" }), { status: 403 });
+      }
     const disaster_id = params.id;
     const nodeReq = await toNodeReadable(req);
 

@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabaseServer';
 import { NextRequest } from 'next/server';
 import { AuditEntry } from '@/types/disaster.type';
 import { withCorsHeaders } from '@/lib/withCors';
+import { getAuthenticatedUser } from '@/lib/authMiddlware';
 
 export function OPTIONS() {
   return new Response(null, {
@@ -15,6 +16,11 @@ export function OPTIONS() {
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const user = await getAuthenticatedUser(req);
+if (!user) {
+  return new Response("Unauthorized", { status: 401 });
+}
+
   try {
     const { id } = params;
     const body = await req.json();
@@ -66,7 +72,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const user = await getAuthenticatedUser(req);
+if (!user) {
+  return new Response("Unauthorized", { status: 401 });
+}
+
   try {
     const { id } = params;
 

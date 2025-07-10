@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { supabase } from "@/lib/supabaseServer";
-import { getUserFromRequest } from '@/lib/getUserFromRequest';
 import { getOrSetCache } from "@/lib/cache";
 import { liveKitEmitter } from "@/lib/livekitEmitter";
+import { getAuthenticatedUser } from "@/lib/authMiddlware";
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -37,7 +37,7 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
 
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const user = await getUserFromRequest();
+  const user = await getAuthenticatedUser(req);
   if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
