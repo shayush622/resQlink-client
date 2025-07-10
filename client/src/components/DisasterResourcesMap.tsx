@@ -2,13 +2,13 @@
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-// ✅ Use official maplibre build from react-map-gl
 import Map, {
   Marker,
+  Popup,
   ViewState,
   ViewStateChangeEvent,
   MapRef,
-} from 'react-map-gl/maplibre'; // ← THIS is the correct import
+} from 'react-map-gl/maplibre'; 
 
 import { useMemo, useRef, useState, useEffect } from 'react';
 import type { Feature, Point } from 'geojson';
@@ -24,11 +24,11 @@ type ResourceClusterProperties = {
   resId: string;
   type: string;
   name: string;
-  description: string;
   location: string;
 };
 
 export default function DisasterResourcesMap({ resources }: Props) {
+  console.log("resources", resources);
   const mapRef = useRef<MapRef | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -42,6 +42,8 @@ export default function DisasterResourcesMap({ resources }: Props) {
   });
 
   const [bounds, setBounds] = useState<[number, number, number, number] | null>(null);
+  const [selectedResource, setSelectedResource] = useState<ResourceClusterProperties | null>(null);
+
 
   useEffect(() => {
     setIsMounted(true);
@@ -50,11 +52,14 @@ export default function DisasterResourcesMap({ resources }: Props) {
   const points: Feature<Point, ResourceClusterProperties>[] = useMemo(() => {
     return resources
       .filter(
-        (r) =>
-          r.location &&
-          typeof (r.location as { lat?: number; lng?: number }).lat === 'number' &&
-          typeof (r.location as { lat?: number; lng?: number }).lng === 'number'
-      )
+  (r) =>
+    r.location &&
+    r.location.type === 'Point' &&
+    Array.isArray(r.location.coordinates) &&
+    r.location.coordinates.length === 2 &&
+    typeof r.location.coordinates[0] === 'number' &&
+    typeof r.location.coordinates[1] === 'number'
+)
       .map((res) => {
         let loc: { lat: number; lng: number };
         if ('lat' in res.location && 'lng' in res.location) {
@@ -78,7 +83,6 @@ export default function DisasterResourcesMap({ resources }: Props) {
             resId: res.id,
             type: res.type,
             name: res.name,
-            description: res.description ?? '',
             location: res.location_name ?? '',
           },
           geometry: {
@@ -88,6 +92,10 @@ export default function DisasterResourcesMap({ resources }: Props) {
         };
       });
   }, [resources]);
+  useEffect(() => {
+  console.log("Map loaded resources:", resources);
+  console.log("Plotted points:", points);
+}, [points]);
 
   const cluster = useMemo(() => {
     const index = new Supercluster<ResourceClusterProperties>({
@@ -150,7 +158,6 @@ export default function DisasterResourcesMap({ resources }: Props) {
         const props = clusterItem.properties as ResourceClusterProperties & {
           point_count?: number;
         };
-
         if (props.cluster) {
           return (
             <Marker
@@ -184,13 +191,38 @@ export default function DisasterResourcesMap({ resources }: Props) {
         }
 
         return (
-          <Marker key={`res-${props.resId}`} longitude={longitude} latitude={latitude}>
-            <div title={props.name} style={{ fontSize: '1.4rem' }}>
-              {getEmoji(props.type)}
-            </div>
-          </Marker>
+        <Marker key={`res-${props.resId}`} longitude={longitude} latitude={latitude}>
+  <div
+    onClick={() => setSelectedResource(props)}
+    style={{ fontSize: '1.4rem', cursor: 'pointer' }}
+    title={props.name}
+  >
+    {getEmoji(props.type)}
+  </div>
+</Marker>
         );
       })}
+      {selectedResource && (
+  <Popup
+    longitude={
+      points.find((p) => p.properties.resId === selectedResource.resId)?.geometry.coordinates[0] || 0
+    }
+    latitude={
+      points.find((p) => p.properties.resId === selectedResource.resId)?.geometry.coordinates[1] || 0
+    }
+    closeOnClick={false}
+    onClose={() => setSelectedResource(null)}
+    anchor="top"
+  >
+    <div>
+      <div className="text-lg">{getEmoji(selectedResource.type)} {selectedResource.name}</div>
+      {selectedResource.location && (
+        <div className="text-sm text-gray-600">📍 {selectedResource.location}</div>
+      )}
+    </div>
+  </Popup>
+)}
+
     </Map>
   );
 }
