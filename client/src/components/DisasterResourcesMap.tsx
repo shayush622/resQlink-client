@@ -1,12 +1,14 @@
 'use client';
 
-import 'react-map-gl/dist/style.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
+// ✅ Use official maplibre build from react-map-gl
 import Map, {
   Marker,
   ViewState,
   ViewStateChangeEvent,
   MapRef,
-} from 'react-map-gl';
+} from 'react-map-gl/maplibre'; // ← THIS is the correct import
 
 import { useMemo, useRef, useState, useEffect } from 'react';
 import type { Feature, Point } from 'geojson';
@@ -66,9 +68,9 @@ export default function DisasterResourcesMap({ resources }: Props) {
           const coords = (res.location as { type: string; coordinates: [number, number] }).coordinates;
           loc = { lng: coords[0], lat: coords[1] };
         } else {
-          // fallback to 0,0 if location is invalid
           loc = { lat: 0, lng: 0 };
         }
+
         return {
           type: 'Feature',
           properties: {
@@ -113,14 +115,18 @@ export default function DisasterResourcesMap({ resources }: Props) {
     return map[type] || '📍';
   };
 
-  if (!isMounted) return null;
+  if (!isMounted) return <div style={{ height: 400 }}>Loading map...</div>;
 
   return (
     <Map
       {...viewport}
       ref={(ref) => {
         mapRef.current = ref;
-        const internalMap = ref?.getMap();
+      }}
+      mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_TOKEN}`}
+      style={{ width: '100%', height: 400 }}
+      onLoad={() => {
+        const internalMap = mapRef.current?.getMap();
         if (internalMap) {
           const b = internalMap.getBounds();
           if (b) {
@@ -138,8 +144,6 @@ export default function DisasterResourcesMap({ resources }: Props) {
           }
         }
       }}
-      mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_TOKEN}`}
-      style={{ width: '100%', height: 400 }}
     >
       {clusters.map((clusterItem) => {
         const [longitude, latitude] = clusterItem.geometry.coordinates;
