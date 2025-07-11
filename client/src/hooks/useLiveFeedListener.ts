@@ -1,4 +1,3 @@
-// client/hooks/useLiveFeedListener.ts
 'use client';
 
 import { useEffect } from 'react';

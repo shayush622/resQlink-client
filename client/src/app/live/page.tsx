@@ -9,7 +9,7 @@ export default function LiveFeedPage() {
   const [feed, setFeed] = useState<LiveKitPayload[]>([]);
 
   useLiveFeedListener((payload) => {
-    setFeed((prev) => [payload, ...prev.slice(0, 99)]); // keep last 100 events
+    setFeed((prev) => [payload, ...prev.slice(0, 99)]); 
   });
 
   return (
