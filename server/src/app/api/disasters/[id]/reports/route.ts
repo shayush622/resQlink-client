@@ -90,19 +90,18 @@ async function webStreamToNodeReadable(webStream: ReadableStream<Uint8Array>) {
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = await getAuthenticatedUser(req);
-      if (!user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-      }
-    
-      if (user.role !== "admin") {
-        return new Response(JSON.stringify({ error: "Forbidden – admin only" }), { status: 403 });
-      }
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
+
+    if (user.role !== "admin") {
+      return new Response(JSON.stringify({ error: "Forbidden – admin only" }), { status: 403 });
+    }
+
     const disaster_id = params.id;
     const nodeReq = await toNodeReadable(req);
-
     const [fields, files] = await parseForm(nodeReq);
 
-    const user_id = Array.isArray(fields.user_id) ? fields.user_id[0] : fields.user_id;
     const content = Array.isArray(fields.content) ? fields.content[0] : fields.content;
 
     let image_url: string | null = null;
@@ -110,7 +109,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     if (files.image) {
       const file = Array.isArray(files.image) ? files.image[0] : files.image;
-       const buffer = await fs.promises.readFile(file.filepath);
+      const buffer = await fs.promises.readFile(file.filepath);
       const uploaded = await uploadImageToImageKit(buffer, file.originalFilename || "upload.jpg");
       image_url = uploaded.url;
 
@@ -119,40 +118,44 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const { data, error } = await supabase.from("reports").insert([{
       disaster_id,
-      user_id,
+      user_id: user.id,
       content,
       image_url,
-      verification_status: (geminiResult ? geminiResult.isVerified ? "verified" : "rejected" : "pending"),
+      verification_status: geminiResult
+        ? geminiResult.isVerified
+          ? "verified"
+          : "rejected"
+        : "pending",
     }]).select("*");
 
     if (error) {
       console.error("Insert error:", error.message);
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
+
     await supabase.from("cache").delete().eq("key", `reports:${disaster_id}`);
 
-     await liveKitEmitter("disaster-" + disaster_id, {
-        type: "report_added",
-        data: {
-          disaster_id,
-          report_id: data[0].id,
-          content: data[0].content,
-          user_id: data[0].user_id,
-          image_url: data[0].image_url,
-          verification_status: data[0].verification_status,
-          created_at: data[0].created_at,
-        },
-      });
-
+    await liveKitEmitter("disaster-" + disaster_id, {
+      type: "report_added",
+      data: {
+        disaster_id,
+        report_id: data[0].id,
+        content: data[0].content,
+        user_id: data[0].user_id,
+        image_url: data[0].image_url,
+        verification_status: data[0].verification_status,
+        created_at: data[0].created_at,
+      },
+    });
 
     return withCorsHeaders(new Response(JSON.stringify(data), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     }));
 
-
   } catch (err) {
     console.error("POST /reports error:", err);
     return withCorsHeaders(new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 }));
   }
 }
+

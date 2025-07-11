@@ -44,3 +44,4 @@ next-env.d.ts
 get-token.mjs
 generateLiveKitToken.mjs
 testListener.mjs
+scripts/

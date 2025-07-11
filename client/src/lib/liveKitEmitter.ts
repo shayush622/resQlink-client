@@ -1,14 +1,3 @@
-import { RoomServiceClient, DataPacket_Kind } from "livekit-server-sdk";
-
-const LIVEKIT_URL = process.env.LIVEKIT_URL!;
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY!;
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET!;
-
-const roomClient = new RoomServiceClient(
-  LIVEKIT_URL,
-  LIVEKIT_API_KEY,
-  LIVEKIT_API_SECRET
-);
 
 export type LiveKitPayload =
   | {
@@ -80,23 +69,3 @@ export type LiveKitPayload =
       };
     };
 
-
-
-export async function liveKitEmitter(room: string, payload: LiveKitPayload): Promise<void> {
-  try {
-    await roomClient
-      .createRoom({
-        name: room,
-        emptyTimeout: 300, 
-        maxParticipants: 50,
-      });
-
-    const json = JSON.stringify(payload);
-    await roomClient.sendData(room, Buffer.from(json), DataPacket_Kind.RELIABLE);
-    console.log(`Sent update to room "${room}":`, payload);
-  }
-   catch (err)
-  {
-    console.error("Failed to send LiveKit update:", err);
-  }
-}

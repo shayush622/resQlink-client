@@ -9,10 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@auth/supabase-adapter": "^1.10.0",
     "@google/generative-ai": "^0.24.1",
     "@imagekit/next": "^2.1.2",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.2",
+    "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
     "dotenv": "^17.0.1",
     "formidable": "^3.5.4",
@@ -20,6 +22,7 @@
     "livekit-client": "^2.15.2",
     "livekit-server-sdk": "^2.13.1",
     "next": "15.3.4",
+    "next-auth": "^4.24.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
